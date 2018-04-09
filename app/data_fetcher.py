@@ -69,8 +69,8 @@ class Fetcher:
         """
         elements_string = ''
         for i in elements_list:
-            elements_string += str(i) + ", "
-        elements_string = elements_string[:-2]
+            elements_string += str(i) + ","
+        elements_string = elements_string[:-1]
 
         return elements_string
 
