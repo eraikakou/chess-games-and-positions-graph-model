@@ -60,6 +60,20 @@ class Fetcher:
         self.games = games
         self.moves = moves
 
+    @staticmethod
+    def create_string_from_list(elements_list):
+        """
+        Concatenates the elements of a list into onw string separated by commas.
+        :param elements_list: list, that needs to be concatenated
+        :return: str, of input list's elements separated by commas
+        """
+        elements_string = ''
+        for i in elements_list:
+            elements_string += str(i) + ", "
+        elements_string = elements_string[:-2]
+
+        return elements_string
+
     def write_to_csv(self, file1, file2):
         """
         Writes the objects lists into two .csv files
@@ -67,14 +81,14 @@ class Fetcher:
         :param file2: str file path to be writen
         """
         with open(file1, 'w', encoding='utf8') as f:
-            f.write('{}\n'.format(str(self.game_tags).split('[')[1].split(']')[0]))
+            f.write('{}\n'.format(self.create_string_from_list(self.game_tags)))
             for game in self.games:
-                f.write('{}\n'.format(str(game).split('[')[1].split(']')[0]))
+                f.write('{}\n'.format(self.create_string_from_list(game)))
 
         with open(file2, 'w', encoding='utf8') as f:
-            f.write('{}\n'.format(str(self.move_tags).split('[')[1].split(']')[0]))
+            f.write('{}\n'.format(self.create_string_from_list(self.move_tags)))
             for move in self.moves:
-                f.write('{}\n'.format(str(move).split('[')[1].split(']')[0]))
+                f.write('{}\n'.format(self.create_string_from_list(move)))
 
     @staticmethod
     def establish_connection():
@@ -117,7 +131,7 @@ class Fetcher:
 
 
 if __name__ == '__main__':
-    home_path = '../chess-games-and-positions-graph-model/data/'
+    home_path = '/Users/aggelikiromanou/Desktop/MSDS/5_Data_mining/Assignment_2/chess-games-and-positions-graph-model/data/'
 
     files = 'chessData.txt'
     games_file = 'games.csv'
@@ -126,9 +140,11 @@ if __name__ == '__main__':
     # data pre-processing
     fetcher = Fetcher()
     fetcher.read_from_file(home_path + files)
+    # pprint(fetcher.data[0])
     fetcher.split_into_two_datasets()
     fetcher.write_to_csv(home_path + games_file, home_path + moves_file)
 
     # neo4j
     neo_driver = Fetcher.establish_connection()
     fetcher.insert_data_to_neo4j(neo_driver, home_path + games_file)
+
