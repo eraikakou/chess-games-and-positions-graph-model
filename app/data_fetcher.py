@@ -1,16 +1,19 @@
 from neo4j.v1 import GraphDatabase
 from pprint import pprint
+import re
 
 
 class Fetcher:
     def __init__(self):
         self.data = None
-        self.games = None
-        self.moves = None
+        self.games = list()
+        self.moves = list()
 
-        self.tags = ['White', 'Black', 'Date', 'HalfMoves', 'Moves', 'Result',
-                     'WhiteElo', 'BlackElo', 'GameNumber', 'Event', 'Site',
-                     'EventDate', 'Round', 'ECO', 'Opening']
+        self.game_tags = ['White', 'Black', 'Date', 'HalfMoves', 'Moves', 'Result',
+                          'WhiteElo', 'BlackElo', 'GameNumber', 'Event', 'Site',
+                          'EventDate', 'Round', 'ECO', 'Opening']
+
+        self.move_tags = ['MoveNumber', 'Side', 'Move', 'FEN', 'GameNumber']
 
     def read_from_file(self, path):
         """
@@ -29,56 +32,103 @@ class Fetcher:
 
     def split_into_two_datasets(self):
         """
-
-        :return:
+        Parses the input data file and creates two lists with the data from the games
+        and the data from the moves of each game.
         """
         games = list()
         moves = list()
-        game_list = None
         for game in self.data:
+            game_list = list()
+            move_list = list()
             for row in game:
-                print('Row: {}'.format(row))
-                game_list = list()
                 tag = row.split(':')[0]
-                if tag in self.tags:
-                    game_list.append(row)
-                break
-            break
+
+                # extract game stats
+                if tag in self.game_tags:
+                    game_list.append(row.split(': ')[1])
+
+                # extract move stats
+                if 'MoveNumber' in str(row):
+                    row_list = list()
+                    for element in row.split(',  '):
+                        row_list.append(element.split(': ')[1])
+                    move_list.append(row_list)
 
             games.append(game_list)
+            moves = move_list
 
         self.games = games
+        self.moves = moves
 
-    def establish_connection(self):
-        pass
+    def write_to_csv(self, file1, file2):
+        """
+        Writes the objects lists into two .csv files
+        :param file1: str file path to be writen
+        :param file2: str file path to be writen
+        """
+        with open(file1, 'w', encoding='utf8') as f:
+            f.write('{}\n'.format(str(self.game_tags).split('[')[1].split(']')[0]))
+            for game in self.games:
+                f.write('{}\n'.format(str(game).split('[')[1].split(']')[0]))
 
-    def insert_data(self):
-        pass
+        with open(file2, 'w', encoding='utf8') as f:
+            f.write('{}\n'.format(str(self.move_tags).split('[')[1].split(']')[0]))
+            for move in self.moves:
+                f.write('{}\n'.format(str(move).split('[')[1].split(']')[0]))
 
     @staticmethod
-    def print_friends_of(name, driver):
+    def establish_connection():
+        """
+        Establishes a connection with neo4j
+        :return: neo4j instance for the given URI and configuration
+        """
+        uri = 'bolt://localhost:7687'
+        driver = GraphDatabase.driver(uri, auth=("neo4j", "*****"))
+
+        return driver
+
+    @staticmethod
+    def create_schema(driver):
+        """
+        Creates the node constraints on the graph
+        :param driver: neo4j instance for the given URI and configuration
+        """
         with driver.session() as session:
             with session.begin_transaction() as tx:
-                for record in tx.run("MATCH (a:Person)-[:KNOWS]->(f) "
-                                     "WHERE a.name = {name} "
-                                     "RETURN f.name", name=name):
-                    print(record["f.name"])
+                tx.run("CREATE CONSTRAINT ON (game:Game) ASSERT game.gameId IS UNIQUE")
+                tx.run("CREATE CONSTRAINT ON (eco:ECO) ASSERT eco.code IS UNIQUE")
+                tx.run("CREATE CONSTRAINT ON (tournament:Tournament) ASSERT tournament.name IS UNIQUE")
+                tx.run("CREATE CONSTRAINT ON (player:Player) ASSERT player.name IS UNIQUE")
+
+    def insert_data_to_neo4j(self, driver, path):
+        """
+        Inserts data into neo4j to fill the graph.
+        :param driver: neo4j instance for the given URI and configuration
+        :param path: str the file path that stores the data
+        """
+
+        strg = 'LOAD CSV WITH HEADERS FROM "{}" AS row MERGE (game:Game { gameId: row.GameNumber }) ' \
+               'ON CREATE SET game.gameId = row.GameNumber,game.date=row.Date,game.result=row.Result,' \
+               'game.whiteElo=row.WhiteElo,game.blackElo=row.BlackElo,game.halfMoves=row.HalfMoves,game.moves=row.Moves'
+
+        with driver.session() as session:
+            with session.begin_transaction() as tx:
+                tx.run(strg.format(path))
 
 
 if __name__ == '__main__':
-    path = '/Users/aggelikiromanou/Desktop/MSDS/5_Data_mining/Assignment_2/' \
-           'chess-games-and-positions-graph-model/data/chessData.txt'
+    home_path = '../chess-games-and-positions-graph-model/data/'
 
+    files = 'chessData.txt'
+    games_file = 'games.csv'
+    moves_file = 'moves.csv'
+
+    # data pre-processing
     fetcher = Fetcher()
-    fetcher.read_from_file(path)
-
-    pprint(fetcher.data[0])
+    fetcher.read_from_file(home_path + files)
     fetcher.split_into_two_datasets()
-    pprint(fetcher.games)
+    fetcher.write_to_csv(home_path + games_file, home_path + moves_file)
 
-
-    # uri = 'bolt://localhost:7687'
-    #
-    # driver = GraphDatabase.driver(uri, auth=("neo4j", "Aggelikh1992"))
-    #
-    # Fetcher.print_friends_of("Alice", driver)
+    # neo4j
+    neo_driver = Fetcher.establish_connection()
+    fetcher.insert_data_to_neo4j(neo_driver, home_path + games_file)
