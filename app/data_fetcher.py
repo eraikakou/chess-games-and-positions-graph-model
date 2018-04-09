@@ -39,7 +39,6 @@ class Fetcher:
         moves = list()
         for game in self.data:
             game_list = list()
-            move_list = list()
             for row in game:
                 tag = row.split(':')[0]
 
@@ -52,10 +51,9 @@ class Fetcher:
                     row_list = list()
                     for element in row.split(',  '):
                         row_list.append(element.split(': ')[1])
-                    move_list.append(row_list)
+                        moves.append(row_list)
 
             games.append(game_list)
-            moves = move_list
 
         self.games = games
         self.moves = moves
