@@ -51,8 +51,8 @@ class Fetcher:
                     row_list = list()
                     for element in row.split(',  '):
                         row_list.append(element.split(': ')[1])
-                        moves.append(row_list)
 
+                    moves.append(row_list)
             games.append(game_list)
 
         self.games = games
@@ -143,6 +143,6 @@ if __name__ == '__main__':
     fetcher.write_to_csv(home_path + games_file, home_path + moves_file)
 
     # neo4j
-    neo_driver = Fetcher.establish_connection()
-    fetcher.insert_data_to_neo4j(neo_driver, home_path + games_file)
+    # neo_driver = Fetcher.establish_connection()
+    # fetcher.insert_data_to_neo4j(neo_driver, home_path + games_file)
 
