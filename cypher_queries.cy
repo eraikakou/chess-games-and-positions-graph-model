@@ -45,3 +45,10 @@ MATCH (game)-[r:Move]->(position:Position)
 MATCH (player:Player)-[:Plays]->(game)
 WITH game as current, tournament as tournamentGame, player as Players, r.moveName as MovesName, toInt(r.moveId) as MovesId Order by MovesId
 RETURN  COLLECT(DISTINCT MovesName) as Moves, current.result as GameResult, current.date as GameDate, current.moves as NumberOfMoves, tournamentGame.name as Tournament, collect(DISTINCT Players.name) as Players
+
+//Query 7
+
+MATCH (game:Game)-[r1:Move]->(p1:Position {fen: 'r1bqkbnrpppp1ppp2n51B2p34P35N2PPPP1PPPRNBQK2R'})
+MATCH (game)-[r2:Move {moveId: toString(toInteger(r1.moveId)+1)}]->(p2:Position)
+WHERE r2.moveName <> 'a6'
+RETURN game.id as GameId, game.result as Result, r2.moveName as AlternativeMove
