@@ -9,4 +9,4 @@ We used the homegrown open source toolset developed by Alistair Jones and GraphA
 appropriately called <b>Arrows</b>. Originally started by Neo Technology's, Alistair Jones (www.apcjones.com) as a side project for graph documentation and visualization, the Arrows toolset today enables very easy and useable documentation of graph database models. 
 The tool is available online at www.apcjones.com/arrows and provides very basic but advanced graph drawing capabilities.
 
-![alt text](https://github.com/eraikakou/chess-games-and-positions-graph-model/blob/master/data_model1.PNG?raw=true)
+![alt text](https://github.com/eraikakou/chess-games-and-positions-graph-model/blob/master/dataModel_final.png)
