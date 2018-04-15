@@ -25,6 +25,20 @@ MATCH (player:Player)-[r:Plays]->(game:Game)
 WHERE game.gameId IN gamesIds
 RETURN player.name, count(*) as games_num
 ORDER BY games_num DESC LIMIT 1
+                          
+//Query 5                          
+MATCH (player:Player)
+MATCH (game:Game)
+MATCH (p1:Position), (p2:Position), (p3:Position)
+MATCH (player)-[r1:Plays]->(game)
+MATCH (game)-[r2:Move {moveName: 'Nc6'}]->(p1)
+MATCH (game)-[r3:Move {moveName: 'Bb5'}]->(p2)
+MATCH (game)-[r4:Move {moveName: 'a6'}]->(p3)
+WHERE TOINT(r3.moveId) = TOINT(r2.moveId)+1
+AND TOINT(r4.moveId) = TOINT(r3.moveId)+1
+WITH distinct player.name as player_name, count(*) as num
+RETURN player_name, num
+
 
 //Query 6
 MATCH (game)-[r:Move]->(position:Position)
